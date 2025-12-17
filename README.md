@@ -14,19 +14,19 @@ Proje, **Çok Seviyeli Geri Beslemeli Kuyruk (MLFQ – Multi-Level Feedback Queu
 - **Hibrit Zamanlama Algoritması**
   - **Gerçek Zamanlı (RT) Görevler:** En yüksek öncelikte çalışır ve kesilmezler (Priority 0)
   - **Normal Görevler:** Dinamik öncelik yönetimi uygulanır  
-    Zaman dilimini (Time Quantum) dolduran görevlerin önceliği düşürülür (Aging / Demotion)
+    Zaman dilimini dolduran görevlerin önceliği düşürülür (Aging / Demotion)
 
 - **Zaman Aşımı (Timeout) Kontrolü**  
-  Belirli bir süre (20 sn) kuyrukta bekleyip çalışamayan görevler otomatik olarak sonlandırılır
+  20 saniye boyunca çalışamayan görevler otomatik olarak sonlandırılır
 
 - **Dosya Tabanlı Giriş**  
-  Görev senaryoları `giris.txt` dosyasından dinamik olarak yüklenir
+  Görevler `giris.txt` dosyasından dinamik olarak okunur
 
 - **Renkli Konsol Çıktısı**  
-  Her görev farklı bir renkle temsil edilir, izleme kolaylaşır
+  Her görev farklı renkle gösterilir
 
 - **Thread-Safe Mimari**  
-  FreeRTOS **Mutex** yapıları ile güvenli veri paylaşımı sağlanır
+  FreeRTOS Mutex yapıları kullanılır
 
 ---
 
@@ -34,107 +34,92 @@ Proje, **Çok Seviyeli Geri Beslemeli Kuyruk (MLFQ – Multi-Level Feedback Queu
 
 ```text
 .
-├── main.c           # Ana giriş noktası ve dispatcher (dağıtıcı) görevi
-├── scheduler.c      # Zamanlayıcı mantığı, kuyruk yönetimi ve algoritmalar
-├── scheduler.h      # Veri yapıları, prototipler ve konfigürasyonlar
-├── tasks.c          # Görevlerin (iş parçacıklarının) tanımı
-├── FreeRTOSConfig.h # FreeRTOS yapılandırma ayarları
-└── giris.txt        # Simülasyon senaryo dosyası
+├── main.c
+├── scheduler.c
+├── scheduler.h
+├── tasks.c
+├── FreeRTOSConfig.h
+└── giris.txt
+```
 
-⚙️ Nasıl Çalışır? (Algoritma Mantığı)
+---
 
-Simülasyon aşağıdaki kurallara göre işler:
+## ⚙️ Algoritma Mantığı
 
-    Görev Yükleme
-    Sistem giris.txt dosyasını okur ve görevleri varış zamanlarına göre kuyruğa ekler
+1. Sistem `giris.txt` dosyasını okur  
+2. Dispatcher her 1 saniyede sistemi kontrol eder  
+3. RT görev varsa doğrudan çalıştırılır  
+4. Normal görevler öncelik sırasına göre seçilir  
+5. Süresi dolmayan görevlerin önceliği düşürülür  
+6. 20 saniye çalışamayan görevler TIMEOUT ile sonlandırılır  
 
-    Dispatcher (Dağıtıcı)
-    Her 1 saniyelik simülasyon adımında sistem durumu kontrol edilir
+---
 
-        Eğer RT görev varsa işlemci ona verilir
+## 🛠️ Kurulum ve Derleme
 
-        Aksi halde normal görevler, öncelik sırasına göre seçilir
+### Gereksinimler
+- GCC
+- Make (önerilir)
+- FreeRTOS POSIX Port
 
-    Yürütme ve Geri Besleme
-
-        Görev kendisine ayrılan sürede (1 sn) bitmezse önceliği düşürülür
-
-        Kuyruğun sonuna eklenir
-
-        Görev tamamlanırsa sistemden kaldırılır
-
-    Zaman Aşımı (Starvation)
-
-        Bir görev 20 saniye boyunca çalışamazsa sistemden atılır
-
-        Konsola TIMEOUT uyarısı yazdırılır
-
-🛠️ Kurulum ve Derleme
-Gereksinimler
-
-    GCC Compiler
-
-    Make (opsiyonel ancak önerilir)
-
-    FreeRTOS POSIX Port
-
-Derleme (Makefile ile)
-
+### Makefile ile
+```bash
 make
+```
 
-Manuel Derleme
-
+### Manuel Derleme
+```bash
 gcc -o scheduler main.c scheduler.c tasks.c \
 -I. -I/path/to/freertos/include -lpthread
+```
 
-▶️ Çalıştırma
+---
 
+## ▶️ Çalıştırma
+
+```bash
 ./scheduler
+```
 
-📄 Giriş Dosyası Formatı (giris.txt)
+---
 
-Her satır aşağıdaki formatta olmalıdır:
+## 📄 giris.txt Formatı
 
+```text
 VarışZamanı, Öncelik, ÇalışmaSüresi
+```
 
-Örnek
-
+### Örnek
+```text
 0, 1, 5
 2, 0, 3
 4, 2, 10
+```
 
-Alan Açıklamaları
+- Öncelik 0 → Real-Time  
+- Öncelik 1 → Yüksek  
+- Öncelik 2 → Orta  
+- Öncelik 3 → Düşük  
 
-    Varış Zamanı: Görevin sisteme giriş zamanı (saniye)
+---
 
-    Öncelik:
+## 📊 Örnek Çıktı
 
-        0 → Real-Time
-
-        1 → Yüksek
-
-        2 → Orta
-
-        3 → Düşük
-
-    Çalışma Süresi: Görevin tamamlanması için gereken süre (Burst Time)
-
-📊 Örnek Çıktı
-
+```text
 0.0000 sn task1 başladı (id:0000 öncelik:1 kalan süre:5 sn)
 1.0000 sn task1 yürütülüyor (id:0000 öncelik:1 kalan süre:4 sn)
 2.0000 sn task2 başladı (id:0001 öncelik:0 kalan süre:3 sn) -> RT görev geldi!
 2.0000 sn task1 askıda (id:0000 öncelik:1 -> 2)
-...
+```
 
-👨‍💻 Katkıda Bulunma
+---
 
-Hata bildirmek veya yeni özellik eklemek için lütfen:
+## 👨‍💻 Katkı
 
-    Issues bölümünü kullanın
+Pull Request ve Issues üzerinden katkı sağlayabilirsiniz.
 
-    veya Pull Request gönderin
+---
 
-📝 Lisans
+## 📝 Lisans
 
-Bu proje MIT Lisansı altında sunulmaktadır.
+MIT Lisansı
