@@ -34,12 +34,22 @@ Proje, **Çok Seviyeli Geri Beslemeli Kuyruk (MLFQ – Multi-Level Feedback Queu
 
 ```text
 .
-├── main.c
-├── scheduler.c
-├── scheduler.h
-├── tasks.c
-├── FreeRTOSConfig.h
-└── giris.txt
+FreeRTOS_PC_Scheduler/
+│
+├── FreeRTOS/
+│ ├── include/
+│ ├── portable/ThirdParty/GCC/Posix/
+│ └── source/
+│
+├── src/
+│ ├── main.c
+│ ├── scheduler.c
+│ ├── scheduler.h
+│ └── tasks.c
+│
+├── Makefile
+├── giris.txt
+└── README.md
 ```
 
 ---
@@ -114,12 +124,3 @@ VarışZamanı, Öncelik, ÇalışmaSüresi
 
 ---
 
-## 👨‍💻 Katkı
-
-Pull Request ve Issues üzerinden katkı sağlayabilirsiniz.
-
----
-
-## 📝 Lisans
-
-MIT Lisansı
